@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ARM Assembly & STM32 Programs</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#0f172a;
+    color:white;
+    padding:40px;
+}
+
+h1{
+    text-align:center;
+}
+
+.section{
+    margin-bottom:40px;
+}
+
+pre{
+    background:#020617;
+    padding:20px;
+    border-radius:10px;
+    overflow-x:auto;
+}
+
+button{
+    margin-bottom:10px;
+    padding:6px 12px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    background:#22c55e;
+    color:white;
+}
+</style>
+
+<script>
+function copyCode(id){
+    let text=document.getElementById(id).innerText;
+    navigator.clipboard.writeText(text);
+    alert("Copied!");
+}
+</script>
+
+</head>
+
+<body>
+
+<h1>ARM Assembly & STM32 Programs</h1>
+
+
+<div class="section">
+<h2>ASCII to Packed</h2>
+<button onclick="copyCode('code1')">Copy</button>
+<pre id="code1">
+AREA asciitopacked,CODE,READONLY
+EXPORT __main
+__main
+LDR r0,=0x20000000
+LDR r1,[r0],#4
+LDR r2,[r0],#4
+AND r3,r1,0x0F
+AND r4,r2,0x0F
+ORR r5,r4,r3,LSL #4
+STR r5,[r0]
+l b l
+end
+</pre>
+</div>
+
+
+<div class="section">
+<h2>ASCII to Unpacked</h2>
+<button onclick="copyCode('code2')">Copy</button>
+<pre id="code2">
+AREA asciitounpacked,CODE,READONLY
+EXPORT __main
+__main
+LDR r0,=0x20000000
+LDR r1,[r0],#4
+AND r3,r1,#0x0F
+STR r3,[r0],#4
+l b l
+end
+</pre>
+</div>
+
+
+<div class="section">
+<h2>Sum of N Numbers</h2>
+<button onclick="copyCode('code3')">Copy</button>
+<pre id="code3">
+AREA sumn,CODE,READONLY
+EXPORT __main
+__main
+LDR r0,=0x20000000
+LDR r1,[r0],#4
+mov r2,#0
+loop LDR r3,[r0],#4
+ADD r2,r2,r3
+SUBS r1,r1,#1
+cmp r1,#0
+bne loop
+STR r2,[r0,#14]
+stop b stop
+end
+</pre>
+</div>
+
+
+<div class="section">
+<h2>Linear Search</h2>
+<button onclick="copyCode('code4')">Copy</button>
+<pre id="code4">
+AREA linearsearch,CODE,READONLY
+EXPORT __main
+__main
+LDR r0,=0x20000000
+LDR r1,[r0],#4
+mov r2,#0
+LDR r3,[r0],#4
+loop LDR r4,[r0],#4
+CMP r3,r4
+BEQ found
+ADD r2,r2,#1
+sub r1,r1,#1
+cmp r1,#0
+bne loop
+B notfound
+
+found
+STR r2,[r0,#34]
+b l
+
+notfound
+MOV r2,#-1
+STRB r2,[r0,#34]
+
+l b l
+end
+</pre>
+</div>
+
+
+<div class="section">
+<h2>Bubble Sort</h2>
+<button onclick="copyCode('code5')">Copy</button>
+<pre id="code5">
+AREA MYCODE, CODE, READONLY
+EXPORT __main
+__main
+
+LDR R0, =ARRAY
+LDR R6, =0x20000000
+MOV R5, #5
+
+COPY
+LDR R1, [R0], #4
+STR R1, [R6], #4
+SUBS R5, R5, #1
+BNE COPY
+
+MOV R4,#4
+
+OUTER
+LDR R6, =0x20000000
+MOV R2,#4
+
+INNER
+LDR R3,[R6]
+LDR R1,[R6,#4]
+CMP R3,R1
+BLE NOSWAP
+
+STR R1,[R6]
+STR R3,[R6,#4]
+
+NOSWAP
+ADD R6,R6,#4
+SUBS R2,R2,#1
+BNE INNER
+
+SUBS R4,R4,#1
+BNE OUTER
+
+STOP
+B STOP
+
+ARRAY DCD 5,1,4,2,3
+END
+</pre>
+</div>
+
+
+<div class="section">
+<h2>Factorial (Subroutine)</h2>
+<button onclick="copyCode('code6')">Copy</button>
+<pre id="code6">
+AREA factorial,CODE,READONLY
+EXPORT __main
+
+__main PROC
+LDR r0,=0x20000000
+LDR r1,[r0,#0]
+BL fact
+STR r3,[r0,#4]
+
+l b l
+ENDP
+
+fact PROC
+mov r2,r1
+mov r3,#1
+
+loop
+mul r3,r2,r3
+sub r2,r2,#1
+cmp r2,#0
+bne loop
+
+BX LR
+ENDP
+end
+</pre>
+</div>
+
+
+<div class="section">
+<h2>Recursive Factorial</h2>
+<button onclick="copyCode('code7')">Copy</button>
+<pre id="code7">
+AREA factorialrec,CODE,READONLY
+EXPORT __main
+
+__main PROC
+LDR r0,=0x20000000
+LDR r1,[r0,#0]
+BL fact
+STR r1,[r0,#4]
+
+l b l
+ENDP
+
+fact PROC
+sub sp,sp,#8
+STR LR,[sp,#4]
+STR r1,[sp,#0]
+
+cmp r1,#1
+bgt L1
+b lpop
+
+L1
+sub r1,r1,#1
+BL fact
+
+lpop
+mov r12,r1
+LDR r1,[sp,#0]
+LDR LR,[sp,#4]
+ADD sp,sp,#8
+
+mul r1,r12,r1
+mov pc,LR
+
+ENDP
+END
+</pre>
+</div>
+
+
+<div class="section">
+<h2>STM32 LED Blink</h2>
+<button onclick="copyCode('code8')">Copy</button>
+<pre id="code8">
+#include<stm32f10x.h>
+
+void delay(uint16_t t){
+volatile unsigned long l=0;
+
+for(uint16_t i=0;i<t;i++){
+for(l=0;l<6000;l++){
+}
+}
+}
+
+int main(){
+
+RCC->APB2ENR |=0xFC;
+GPIOC->CRH=0x44344444;
+
+while(1){
+
+GPIOC->ODR^=(1<<13);
+delay(100);
+
+}
+}
+</pre>
+</div>
+
+
+<div class="section">
+<h2>STM32 Timer Delay</h2>
+<button onclick="copyCode('code9')">Copy</button>
+<pre id="code9">
+#include<stm32f10x.h>
+
+void delay(){
+
+RCC->APB1ENR |=(1<<0);
+
+TIM2->PSC=7199;
+TIM2->ARR=499;
+TIM2->SR=0;
+
+TIM2->CR1=1;
+
+while((TIM2->SR & 1)==0);
+
+TIM2->CR1=0;
+
+}
+
+int main(){
+
+RCC->APB2ENR |=0xFC;
+GPIOC->CRH=0x44344444;
+
+while(1){
+
+GPIOC->ODR^=(1<<13);
+delay();
+
+}
+}
+</pre>
+</div>
+
+
+</body>
+</html>
